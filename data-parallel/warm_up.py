@@ -20,7 +20,7 @@ def setup():
 
     t = torch.tensor([rank], device=device)
 
-    s = torch.arange(8, device=device)
+    s = torch.arange(8, device=device, dtype=torch.float32)
 
     gather_slots = [torch.zeros(1, device=device) for _ in range(world_size)]
     distributed.all_gather(gather_slots, t)
@@ -35,3 +35,4 @@ def setup():
 
 if __name__ == "__main__":
     setup()
+    distributed.destroy_process_group()
