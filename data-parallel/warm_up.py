@@ -18,7 +18,7 @@ def setup():
 
     distributed.init_process_group(backend="nccl", rank=rank, world_size=world_size, device_id=device)
 
-    t = torch.tensor([rank], device=device)
+    t = torch.tensor([rank], device=device, dtype=torch.float32)
 
     s = torch.arange(8, device=device, dtype=torch.float32)
 
