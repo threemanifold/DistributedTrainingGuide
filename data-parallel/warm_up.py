@@ -1,4 +1,5 @@
 import os
+import time
 
 import torch
 from torch import distributed
@@ -35,9 +36,33 @@ def setup():
 
     u = torch.arange(8, device=device, dtype=torch.float32)
 
-    print(f"Before all-reduce: {u}")
+    if rank == 0:
+        print(f"Before all-reduce: {u}")
+        torch.cuda.synchronize(device)
+        start = time.time()
     distributed.all_reduce(u, op=distributed.ReduceOp.SUM)
-    print(f"After all-reduce: {u}")
+    if rank == 0:
+        print(f"After all-reduce: {u}")
+        torch.cuda.synchronize()
+        delta = time.time() - start
+        print(f"Time for all-reduce: {delta}")
+    
+    u = torch.arange(8, device=device, dtype=torch.float32)
+    scatter_output = torch.zeros(2, device=device)
+    gather_slots = [torch.zeros(2, device=device) for _ in range(world_size)]
+
+    if rank == 0:
+        torch.cuda.synchronize()
+        start = time.time()
+    distributed.reduce_scatter_tensor(scatter_output, u, op=distributed.ReduceOp.SUM)
+    distributed.all_gather(gather_slots, scatter_output)
+    if rank == 0:
+        torch.cuda.synchronize()
+        delta = time.time() - start
+        print(f"Time for reduce-scatter + all-gather: {delta}")
+    print(f"reduce-Scatter + all-gather: {torch.concat(gather_slots)}")
+
+
 
 
 
