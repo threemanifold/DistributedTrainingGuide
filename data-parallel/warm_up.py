@@ -25,13 +25,21 @@ def setup():
     gather_slots = [torch.zeros(1, device=device) for _ in range(world_size)]
     distributed.all_gather(gather_slots, t)
 
-    print(f"Device {rank} all-gather: {torch.concat(gather_slots)}")
+    print(f"Device {rank} all-gather: {torch.concat(gather_slots)}\n")
 
     scatter_output = torch.zeros(2, device=device)
 
     distributed.reduce_scatter_tensor(scatter_output, s)
 
-    print(f"Device {rank} reduce-scatter: {scatter_output}")
+    print(f"Device {rank} reduce-scatter: {scatter_output}\n")
+
+    u = torch.arange(8, device=device, dtype=torch.float32)
+
+    print(f"Before all-reduce: {u}")
+    distributed.all_reduce(u, op=distributed.ReduceOp.SUM)
+    print(f"After all-reduce: {u}")
+
+
 
 if __name__ == "__main__":
     setup()
